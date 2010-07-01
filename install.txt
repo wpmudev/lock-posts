@@ -1,0 +1,11 @@
+Plugin Name: Lock Posts
+Author: Andrew Billits
+
+Files:
+----------------------------------------------------------------------
+lock-post.php - goes in /wp-content/mu-plugins
+locked.php - goes in /wp-admin
+
+Instructions:
+----------------------------------------------------------------------
+1) Place the files in the specified directories
