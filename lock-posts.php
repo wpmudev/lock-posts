@@ -135,7 +135,7 @@ class Lock_Posts {
 				$post_lock_status = $post_lock_status[0];
 
 			if ( $post_lock_status == 'locked' )
-				wp_redirect( admin_url( 'admin.php?page=post-locked&post=' . $_GET['post'] ) );
+				wp_redirect( admin_url( 'edit.php?page=post-locked&post=' . $_GET['post'] ) );
 		}
 	}
 
@@ -157,13 +157,13 @@ class Lock_Posts {
 	 *
 	 */
 	function admin_page() {
-		global $menu;
+		global $submenu;
 
-		$page = add_menu_page( 'Post Locked', 'Post Locked', 'edit_posts', 'post-locked', array( &$this, 'locked' ) );
+		add_submenu_page( 'edit.php', 'Post Locked', 'Post Locked', 'edit_posts', 'post-locked', array( &$this, 'locked' ) );
 
-		foreach( $menu as $key => $menu_item ) {
-			if( isset( $menu_item[5] ) && $menu_item[5] == $page )
-				unset( $menu[$key] );
+		foreach( $submenu['edit.php'] as $key => $menu_item ) {
+			if( isset( $menu_item[2] ) && $menu_item[2] == 'post-locked' )
+				unset( $submenu['edit.php'][$key] );
 		}
 	}
 
