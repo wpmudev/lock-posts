@@ -7,6 +7,7 @@ Author: Andrew Billits, Ulrich Sossou
 Version: 1.0.2
 Text Domain: lock_posts
 Author URI: http://premium.wpmudev.org/
+WDP ID: 83
 */
 
 /*
