@@ -5,6 +5,7 @@ Plugin URI: http://premium.wpmudev.org/project/lock-posts
 Description: This plugin allows site admin to lock down posts on any blog so that regular ol' users just can't edit them - for example, with a school assignment - stop it from being edited after submission.
 Author: Andrew Billits, Ulrich Sossou
 Version: 1.0.2
+Network: true
 Text Domain: lock_posts
 Author URI: http://premium.wpmudev.org/
 WDP ID: 83
