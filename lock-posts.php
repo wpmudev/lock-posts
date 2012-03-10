@@ -4,8 +4,7 @@ Plugin Name: Lock Posts
 Plugin URI: http://premium.wpmudev.org/project/lock-posts
 Description: This plugin allows site admin to lock down posts on any blog so that regular ol' users just can't edit them - for example, with a school assignment - stop it from being edited after submission.
 Author: Andrew Billits, Ulrich Sossou
-Version: 1.0.2
-Network: true
+Version: 1.0.3
 Text Domain: lock_posts
 Author URI: http://premium.wpmudev.org/
 WDP ID: 83
@@ -119,7 +118,7 @@ class Lock_Posts {
 				<option value="locked" <?php selected( $post_lock_status, 'locked' ) ?>><?php _e( 'Locked', 'lock_posts' ) ?></option>
 				<option value="unlocked" <?php selected( $post_lock_status, 'unlocked' ) ?>><?php _e( 'Unlocked', 'lock_posts' ) ?></option>
 			</select>
-			<p><?php _e( 'Locked posts cannot be edited by anyone other than site admins.', 'lock_posts' ); ?></p>
+			<p><?php _e( 'Locked posts cannot be edited by anyone other than Super admins.', 'lock_posts' ); ?></p>
 		</div>
 		<?php
 	}
@@ -157,7 +156,7 @@ class Lock_Posts {
 		$post = get_post( $_GET['post'] );
 		echo '<div class="wrap">';
 		echo '<h2>' . __( 'Post Locked', 'lock_posts' ) . '</h2>';
-		echo '<p>' . sprintf( __( 'The post "%s" has been locked by a site administrator.', 'lock_posts' ), $post->post_title ) . '</p>';
+		echo '<p>' . sprintf( __( 'The post "%s" has been locked by a Super admin and you aren\'t able to edit it.', 'lock_posts' ), $post->post_title ) . '</p>';
 		echo '<p><a href="' . admin_url( 'edit.php?post_type=' . $post->post_type ) . '">&laquo; ' . __( 'Back to Posts List', 'lock_posts' ) . '</a></p>';
 		echo '</div>';
 	}
@@ -170,8 +169,8 @@ class Lock_Posts {
 		global $submenu;
 
 		add_submenu_page( 'edit.php', 'Post Locked', 'Post Locked', 'edit_posts', 'post-locked', array( &$this, 'locked' ) );
-
-		foreach( $submenu['edit.php'] as $key => $menu_item ) {
+		
+		if (isset($submenu['edit.php']) && is_array($submenu['edit.php'])) foreach( $submenu['edit.php'] as $key => $menu_item ) {
 			if( isset( $menu_item[2] ) && $menu_item[2] == 'post-locked' )
 				unset( $submenu['edit.php'][$key] );
 		}
