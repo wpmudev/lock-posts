@@ -3,15 +3,15 @@
 Plugin Name: Lock Posts
 Plugin URI: http://premium.wpmudev.org/project/lock-posts
 Description: This plugin allows site admin to lock down posts on any blog so that regular ol' users just can't edit them - for example, with a school assignment - stop it from being edited after submission.
-Author: Andrew Billits, Ulrich Sossou
-Version: 1.0.3
+Author: Andrew Billits, Ulrich Sossou, Maniu
+Version: 1.1
 Text Domain: lock_posts
 Author URI: http://premium.wpmudev.org/
 WDP ID: 83
 */
 
 /*
-Copyright 2007-2011 Incsub (http://incsub.com)
+Copyright 2007-2013 Incsub (http://incsub.com)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License (Version 2 - GPLv2) as published by
@@ -29,27 +29,31 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 class Lock_Posts {
 
-	/**
-	 * PHP4 constructor
-	 *
-	 */
-	function Lock_Posts() {
-		__construct();
-	}
+	var $post_types;
 
 	/**
 	 * PHP5 constructor
 	 *
 	 */
 	function __construct() {
+		include_once( 'lock-posts-files/wpmudev-dash-notification.php' );
+
 		add_action( 'admin_menu', array( &$this, 'meta_box' ) );
 		add_action( 'admin_menu', array( &$this, 'admin_page' ) );
 		add_action( 'save_post', array( &$this, 'update' ) );
 		add_action( 'init', array( &$this, 'check' ) );
-		add_action( 'manage_posts_custom_column', array( &$this, 'status_output' ), 2, 2 );
-		add_filter( 'manage_posts_columns', array( &$this, 'status_column' ) );
-		add_action( 'manage_pages_custom_column', array( &$this, 'status_output' ), 2, 2 );
-		add_filter( 'manage_pages_columns', array( &$this, 'status_column' ) );
+
+		add_action( 'init', array( &$this, 'add_columns' ), 99 );
+	}
+
+	function add_columns() {
+		$this->post_types = get_post_types(array('show_ui' => true, 'public' => true));
+		unset($this->post_types['attachment']);
+
+		foreach ($this->post_types as $post_type) {
+			add_filter( 'manage_edit-'.$post_type.'_columns', array( &$this, 'status_column' ), 999 );
+			add_action( 'manage_'.$post_type.'_posts_custom_column', array( &$this, 'status_output' ), 99, 2 );
+		}
 
 		// load text domain
 		if ( defined( 'WPMU_PLUGIN_DIR' ) && file_exists( WPMU_PLUGIN_DIR . '/lock-posts.php' ) ) {
@@ -92,8 +96,9 @@ class Lock_Posts {
 	 */
 	function meta_box() {
 		if( is_super_admin() && !empty( $_GET['action'] ) && 'edit' == $_GET['action'] ) {
-			add_meta_box( 'postlock', __( 'Post Status', 'lock_posts' ), array( &$this, 'meta_box_output' ), 'post', 'advanced', 'high' );
-			add_meta_box( 'postlock', __( 'Post Status', 'lock_posts' ), array( &$this, 'meta_box_output' ), 'page', 'advanced', 'high' );
+			foreach ($this->post_types as $key => $post_type) {
+				add_meta_box( 'postlock', __( 'Post Status', 'lock_posts' ), array( &$this, 'meta_box_output' ), $post_type, 'advanced', 'high' );
+			}
 		}
 	}
 
@@ -169,7 +174,7 @@ class Lock_Posts {
 		global $submenu;
 
 		add_submenu_page( 'edit.php', 'Post Locked', 'Post Locked', 'edit_posts', 'post-locked', array( &$this, 'locked' ) );
-		
+
 		if (isset($submenu['edit.php']) && is_array($submenu['edit.php'])) foreach( $submenu['edit.php'] as $key => $menu_item ) {
 			if( isset( $menu_item[2] ) && $menu_item[2] == 'post-locked' )
 				unset( $submenu['edit.php'][$key] );
@@ -179,17 +184,3 @@ class Lock_Posts {
 }
 
 $lock_posts = new Lock_Posts();
-
-/**
- * Show notification if WPMUDEV Update Notifications plugin is not installed
- *
- **/
-if ( !function_exists( 'wdp_un_check' ) ) {
-	add_action( 'admin_notices', 'wdp_un_check', 5 );
-	add_action( 'network_admin_notices', 'wdp_un_check', 5 );
-
-	function wdp_un_check() {
-		if ( !class_exists( 'WPMUDEV_Update_Notifications' ) && current_user_can( 'edit_users' ) )
-			echo '<div class="error fade"><p>' . __('Please install the latest version of <a href="http://premium.wpmudev.org/project/update-notifications/" title="Download Now &raquo;">our free Update Notifications plugin</a> which helps you stay up-to-date with the most stable, secure versions of WPMU DEV themes and plugins. <a href="http://premium.wpmudev.org/wpmu-dev/update-notifications-plugin-information/">More information &raquo;</a>', 'wpmudev') . '</a></p></div>';
-	}
-}
