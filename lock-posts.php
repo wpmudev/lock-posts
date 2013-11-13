@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 class Lock_Posts {
 
 	var $post_types;
+	var $lock_capabilities;
 
 	/**
 	 * PHP5 constructor
@@ -38,14 +39,58 @@ class Lock_Posts {
 	function __construct() {
 		include_once( 'lock-posts-files/wpmudev-dash-notification.php' );
 
-		add_action( 'admin_menu', array( &$this, 'meta_box' ) );
+		$this->lock_capabilities = array(
+			'edit_post',
+			'delete_post',
+		);
+
+		add_action( 'add_meta_boxes', array( &$this, 'meta_box' ) );
 		add_action( 'admin_menu', array( &$this, 'admin_page' ) );
 		add_action( 'save_post', array( &$this, 'update' ) );
 		add_action( 'init', array( &$this, 'check' ) );
 
+		add_filter('user_has_cap', array($this, 'kill_edit_cap'), 10, 3);
+
 		add_action( 'init', array( &$this, 'add_columns' ), 99 );
+
+		add_action( 'plugins_loaded', array( &$this, 'load_languages' ) );
 	}
 
+	function load_languages() {
+		// load text domain
+		if ( defined( 'WPMU_PLUGIN_DIR' ) && file_exists( WPMU_PLUGIN_DIR . '/lock-posts.php' ) ) {
+			load_muplugin_textdomain( 'lock_posts', 'lock-posts-files/languages' );
+		} else {
+			load_plugin_textdomain( 'lock_posts', false, dirname( plugin_basename( __FILE__ ) ) . '/lock-posts-files/languages' );
+		}
+	}
+
+	/**
+	 * Properly filtering out forbidden capabilities for non-super admin users.
+	 */
+	function kill_edit_cap ($all, $caps, $args) {
+		global $post;
+		if (!is_object($post) || !isset($post->post_type)) return $all; // Only proceed for pages with known post types
+		if (!in_array($post->post_type, $this->lock_capabilities)) return $all; // Only proceed for allowed types
+
+		if (!$args) return $all; // Something is wrong here.
+		if (count($args) < 3) return $all; // Only proceed for individual items.
+		if (!isset($args[0])) return $all; // Something is still wrong here.
+
+		//if ('edit_post' != $args[0]) return $all; // So, not the one we're looking for.
+		if (!in_array($args[0], $this->lock_capabilities)) return $all; // Not one of the forbidden capabilities
+		$post_id = isset($args[2]) ? $args[2] : false;
+		if (!$post_id) return $all; // Can't obtain post ID
+
+		$post_lock_status = ('locked' == get_post_meta($post_id, '_post_lock_status', true));
+
+		return $post_lock_status ? (is_super_admin() ? $all : false) : $all;
+	}
+
+	/**
+	 * Properly manage columns
+	 *
+	 */
 	function add_columns() {
 		$this->post_types = get_post_types(array('show_ui' => true, 'public' => true));
 		unset($this->post_types['attachment']);
@@ -53,13 +98,6 @@ class Lock_Posts {
 		foreach ($this->post_types as $post_type) {
 			add_filter( 'manage_edit-'.$post_type.'_columns', array( &$this, 'status_column' ), 999 );
 			add_action( 'manage_'.$post_type.'_posts_custom_column', array( &$this, 'status_output' ), 99, 2 );
-		}
-
-		// load text domain
-		if ( defined( 'WPMU_PLUGIN_DIR' ) && file_exists( WPMU_PLUGIN_DIR . '/lock-posts.php' ) ) {
-			load_muplugin_textdomain( 'lock_posts', 'lock-posts-files/languages' );
-		} else {
-			load_plugin_textdomain( 'lock_posts', false, dirname( plugin_basename( __FILE__ ) ) . '/lock-posts-files/languages' );
 		}
 	}
 
@@ -95,10 +133,10 @@ class Lock_Posts {
 	 *
 	 */
 	function meta_box() {
-		if( is_super_admin() && !empty( $_GET['action'] ) && 'edit' == $_GET['action'] ) {
-			foreach ($this->post_types as $key => $post_type) {
-				add_meta_box( 'postlock', __( 'Post Status', 'lock_posts' ), array( &$this, 'meta_box_output' ), $post_type, 'advanced', 'high' );
-			}
+		if (!is_super_admin()) return;
+
+		foreach ($this->post_types as $key => $post_type) {
+			add_meta_box( 'postlock', __( 'Post Status', 'lock_posts' ), array( &$this, 'meta_box_output' ), $post_type, 'advanced', 'high' );
 		}
 	}
 
