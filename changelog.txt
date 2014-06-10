@@ -1,5 +1,7 @@
 Plugin Name: Lock Posts
-Author: Andrew Billits, Ulrich Sossou, Maniu
+Author: WPMUDEV
+Lead developer: Maniu
+Contributors: Andrew Billits, Ulrich Sossou
 
 Change Log:
 ----------------------------------------------------------------------
