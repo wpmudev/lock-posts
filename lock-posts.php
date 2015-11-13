@@ -1,17 +1,17 @@
 <?php
 /*
 Plugin Name: Lock Posts
-Plugin URI: http://premium.wpmudev.org/project/lock-posts
+Plugin URI: https://premium.wpmudev.org/project/lock-posts/
 Description: This plugin allows site admin to lock down posts on any blog so that regular ol' users just can't edit them - for example, with a school assignment - stop it from being edited after submission.
-Author: WPMUDEV
-Version: 1.1.5
+Author: WPMU DEV
+Version: 1.1.6
 Text Domain: lock_posts
 Author URI: http://premium.wpmudev.org/
 WDP ID: 83
 */
 
 /*
-Copyright 2007-2013 Incsub (http://incsub.com)
+Copyright 2007-2015 Incsub (http://incsub.com)
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License (Version 2 - GPLv2) as published by
@@ -37,7 +37,6 @@ class Lock_Posts {
 	 *
 	 */
 	function __construct() {
-		include_once( 'lock-posts-files/wpmudev-dash-notification.php' );
 
 		$this->lock_capabilities = array(
 			'edit_post',
@@ -222,3 +221,8 @@ class Lock_Posts {
 }
 
 $lock_posts = new Lock_Posts();
+
+global $wpmudev_notices;
+$wpmudev_notices[] = array( 'id'=> 83, 'name'=> 'Lock Posts', 'screens' => array( 'post' ) );
+include_once(plugin_dir_path( __FILE__ ).'dash-notice/wpmudev-dash-notification.php');
+
